@@ -1,0 +1,17 @@
+buildscript {
+  repositories {
+    google()
+    mavenCentral()
+  }
+}
+
+allprojects {
+  repositories {
+    google()
+    mavenCentral()
+  }
+}
+
+dependencies {
+    implementation 'com.google.android.gms:play-services-pay:16.1.0'
+}

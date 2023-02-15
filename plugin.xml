@@ -1,0 +1,23 @@
+<?xml version='1.0' encoding='utf-8'?>
+<plugin id="uk.co.altras.altrasGooglePay" version="0.0.1"
+    xmlns="http://apache.org/cordova/ns/plugins/1.0"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+    <name>AltrasGooglePay</name>
+    <js-module name="AltrasGooglePay" src="www/AltrasGooglePay.js">
+        <clobbers target="AltrasGooglePay" />
+    </js-module>
+    <platform name="android">
+        <config-file parent="/*" target="res/xml/config.xml">
+            <feature name="AltrasGooglePay">
+                <param name="android-package" value="uk.co.altras.altrasGooglePay.AltrasGooglePay" />
+            </feature>
+        </config-file>
+        <config-file mode="merge" parent="/manifest/application" target="AndroidManifest.xml">
+            <meta-data android:name="com.google.android.gms.wallet.api.enabled" android:value="true" />
+        </config-file>
+        <framework custom="true" src="src/android/build.gradle" type="gradleReference"/>
+
+        <config-file parent="/*" target="AndroidManifest.xml"></config-file>
+        <source-file src="src/android/AltrasGooglePay.java" target-dir="src/uk/co/altras/altrasGooglePay/AltrasGooglePay" />
+    </platform>
+</plugin>
