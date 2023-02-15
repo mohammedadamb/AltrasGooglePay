@@ -1,0 +1,25 @@
+{
+  "name": "uk.co.altras.altrasGooglePay",
+  "version": "0.0.1",
+  "description": "",
+  "cordova": {
+    "id": "uk.co.altras.altrasGooglePay",
+    "platforms": [
+      "android"
+    ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mohammedadamb/AltrasGooglePay.git"
+  },
+  "keywords": [
+    "ecosystem:cordova",
+    "cordova-android"
+  ],
+  "author": "Mohammed Adam Bakhit",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/mohammedadamb/AltrasGooglePay/issues"
+  },
+  "homepage": "https://github.com/mohammedadamb/AltrasGooglePay#readme"
+}
