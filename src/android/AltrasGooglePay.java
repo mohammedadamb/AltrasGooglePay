@@ -55,7 +55,7 @@ public class AltrasGooglePay extends CordovaPlugin {
         }
         if (action.equals("initGooglePay")) {
             // String message = args.getString(0); 
-            this.initGooglePay(this, callbackContext);
+            this.initGooglePay( callbackContext);
             return true;
         }
         if (action.equals("canUseGooglePay")) {
