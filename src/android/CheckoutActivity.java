@@ -57,7 +57,7 @@ public class CheckoutActivity extends AppCompatActivity {
     }
 
 
-    private  static boolean initGooglePay() {
+    public   static boolean initGooglePay() {
         Wallet.WalletOptions walletOptions =
                 new Wallet.WalletOptions.Builder().setEnvironment(WalletConstants.ENVIRONMENT_TEST).build();
         this.paymentsClient =  Wallet.getPaymentsClient(this, walletOptions);
@@ -93,7 +93,7 @@ public class CheckoutActivity extends AppCompatActivity {
 //     }
 
 
-    private static void canUseGooglePay(JSONObject isReadyToPayRequest,  CallbackContext callbackContext  ) {
+    public  static void canUseGooglePay(JSONObject isReadyToPayRequest,  CallbackContext callbackContext  ) {
 
         final Optional<JSONObject> isReadyToPayJson = Optional.of(isReadyToPayRequest);
         if (!isReadyToPayJson.isPresent()) {
