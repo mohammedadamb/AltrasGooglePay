@@ -36,6 +36,8 @@ import org.json.JSONObject;
 import java.util.Locale;
 import java.util.Optional;
 
+import uk.co.altras.altrasGooglePay.CheckoutActivity;
+
 /**
  * This class echoes a string called from JavaScript.
  */
@@ -64,42 +66,19 @@ public class AltrasGooglePay extends CordovaPlugin {
         return false;
     }
 
-    private  void initGooglePay(Activity activity, CallbackContext callbackContext) {
-        Wallet.WalletOptions walletOptions =
-                new Wallet.WalletOptions.Builder().setEnvironment(Constants.PAYMENTS_ENVIRONMENT).build();
-        this.paymentsClient =  Wallet.getPaymentsClient(activity, walletOptions);
-        callbackContext.success("init successfully");
+    private  void initGooglePay( CallbackContext callbackContext) {
+        if(CheckoutActivity.initGooglePay()) {
+            callbackContext.success("init successfully");
+        } else {
+            callbackContext.error("init successfully");
+        }
 
     }
 
 
 
     private void canUseGooglePay(JSONObject isReadyToPayRequest, CallbackContext callbackContext ) {
-
-        final Optional<JSONObject> isReadyToPayJson = Optional.of(isReadyToPayRequest);
-        if (!isReadyToPayJson.isPresent()) {
-            return;
-        }
-
-        // The call to isReadyToPay is asynchronous and returns a Task. We need to provide an
-        // OnCompleteListener to be triggered when the result of the call is known.
-        IsReadyToPayRequest request = IsReadyToPayRequest.fromJson(isReadyToPayJson.get().toString());
-        Task<Boolean> task = paymentsClient.isReadyToPay(request);
-        task.addOnCompleteListener(this,
-                new OnCompleteListener<Boolean>() {
-                    @Override
-                    public void onComplete(@NonNull Task<Boolean> task) {
-                        if (task.isSuccessful()) {
-                            callbackContext.success(task.getResult());
-
-                            // setGooglePayAvailable(task.getResult());
-                        } else {
-                            // Log.w("isReadyToPay failed", task.getException());
-                            callbackContext.error("isReadyToPay failed", task.getException());
-
-                        }
-                    }
-                });
+       CheckoutActivity.canUseGooglePay(JSONObject isReadyToPayRequest, CallbackContext callbackContext);
     }
 
     private void coolMethod(String message, CallbackContext callbackContext) {
