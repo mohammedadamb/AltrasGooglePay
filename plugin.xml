@@ -19,5 +19,7 @@
 
         <config-file parent="/*" target="AndroidManifest.xml"></config-file>
         <source-file src="src/android/AltrasGooglePay.java" target-dir="src/uk/co/altras/altrasGooglePay/AltrasGooglePay" />
+        <source-file src="src/android/CheckoutActivity.java" target-dir="src/uk/co/altras/altrasGooglePay/AltrasGooglePay" />
+
     </platform>
 </plugin>
