@@ -78,7 +78,7 @@ public class AltrasGooglePay extends CordovaPlugin {
 
 
     private void canUseGooglePay(JSONObject isReadyToPayRequest, CallbackContext callbackContext ) {
-       CheckoutActivity.canUseGooglePay(JSONObject isReadyToPayRequest, CallbackContext callbackContext);
+       CheckoutActivity.canUseGooglePay(isReadyToPayRequest, callbackContext);
     }
 
     private void coolMethod(String message, CallbackContext callbackContext) {

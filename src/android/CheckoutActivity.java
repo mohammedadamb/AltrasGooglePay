@@ -62,7 +62,6 @@ public class CheckoutActivity extends AppCompatActivity {
                 new Wallet.WalletOptions.Builder().setEnvironment(WalletConstants.ENVIRONMENT_TEST).build();
         this.paymentsClient =  Wallet.getPaymentsClient(this, walletOptions);
         return true ;
-
     }
 
     // @Override
