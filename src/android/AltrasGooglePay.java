@@ -67,7 +67,7 @@ public class AltrasGooglePay extends CordovaPlugin {
     }
 
     private  void initGooglePay( CallbackContext callbackContext) {
-        if(CheckoutActivity.initGooglePay(CheckoutActivity.this)) {
+        if(CheckoutActivity.initGooglePay(CheckoutActivity)) {
             callbackContext.success("init successfully");
         } else {
             callbackContext.error("init successfully");
@@ -78,7 +78,7 @@ public class AltrasGooglePay extends CordovaPlugin {
 
 
     private void canUseGooglePay(JSONObject isReadyToPayRequest, CallbackContext callbackContext ) {
-       CheckoutActivity.canUseGooglePay(CheckoutActivity.this, isReadyToPayRequest, callbackContext);
+       CheckoutActivity.canUseGooglePay(CheckoutActivity, isReadyToPayRequest, callbackContext);
     }
 
     private void coolMethod(String message, CallbackContext callbackContext) {

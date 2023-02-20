@@ -37,7 +37,7 @@ public class CheckoutActivity extends AppCompatActivity {
 
     private static final int LOAD_PAYMENT_DATA_REQUEST_CODE = 991;
     public static final int PAYMENTS_ENVIRONMENT = WalletConstants.ENVIRONMENT_TEST;
-    private static Context mContext = this;
+    // private static Context mContext = this;
 
     private static PaymentsClient paymentsClient;
 
@@ -59,7 +59,7 @@ public class CheckoutActivity extends AppCompatActivity {
     }
 
 
-    public   static boolean initGooglePay(Context mContext) {
+    public   static boolean initGooglePay(Activity mContext) {
         Wallet.WalletOptions walletOptions =
                 new Wallet.WalletOptions.Builder().setEnvironment(WalletConstants.ENVIRONMENT_TEST).build();
         CheckoutActivity.paymentsClient =  Wallet.getPaymentsClient(mContext, walletOptions);
@@ -95,7 +95,7 @@ public class CheckoutActivity extends AppCompatActivity {
 //     }
 
 
-    public  static void canUseGooglePay(Context mContext,JSONObject isReadyToPayRequest,  CallbackContext callbackContext  ) {
+    public  static void canUseGooglePay(Activity mContext,JSONObject isReadyToPayRequest,  CallbackContext callbackContext  ) {
 
         final Optional<JSONObject> isReadyToPayJson = Optional.of(isReadyToPayRequest);
         if (!isReadyToPayJson.isPresent()) {
@@ -111,12 +111,12 @@ public class CheckoutActivity extends AppCompatActivity {
                     @Override
                     public void onComplete(@NonNull Task<Boolean> task) {
                         if (task.isSuccessful()) {
-                            callbackContext.success(task.getResult());
+                            callbackContext.success("can use  google pay");
 
                             // setGooglePayAvailable(task.getResult());
                         } else {
                             // Log.w("isReadyToPay failed", task.getException());
-                            callbackContext.error("isReadyToPay failed", task.getException());
+                            callbackContext.error("isReadyToPay failed");
 
                         }
                     }
