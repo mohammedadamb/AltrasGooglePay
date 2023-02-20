@@ -23,6 +23,7 @@ import com.google.android.gms.wallet.PaymentDataRequest;
 import com.google.android.gms.wallet.PaymentsClient;
 import com.google.android.gms.wallet.WalletConstants;
 import org.apache.cordova.CallbackContext;
+import com.google.android.gms.wallet.Wallet;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -36,7 +37,7 @@ public class CheckoutActivity extends AppCompatActivity {
     private static final int LOAD_PAYMENT_DATA_REQUEST_CODE = 991;
     public static final int PAYMENTS_ENVIRONMENT = WalletConstants.ENVIRONMENT_TEST;
 
-    private PaymentsClient paymentsClient;
+    private static PaymentsClient paymentsClient;
 
     /**
      * Initialize the Google Pay API on creation of the activity
@@ -60,7 +61,7 @@ public class CheckoutActivity extends AppCompatActivity {
     public   static boolean initGooglePay() {
         Wallet.WalletOptions walletOptions =
                 new Wallet.WalletOptions.Builder().setEnvironment(WalletConstants.ENVIRONMENT_TEST).build();
-        this.paymentsClient =  Wallet.getPaymentsClient(this, walletOptions);
+        CheckoutActivity.paymentsClient =  Wallet.getPaymentsClient(CheckoutActivity.this, walletOptions);
         return true ;
     }
 
