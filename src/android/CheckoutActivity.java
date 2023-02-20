@@ -24,6 +24,7 @@ import com.google.android.gms.wallet.PaymentsClient;
 import com.google.android.gms.wallet.WalletConstants;
 import org.apache.cordova.CallbackContext;
 import com.google.android.gms.wallet.Wallet;
+import android.content.Context;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -58,7 +59,7 @@ public class CheckoutActivity extends AppCompatActivity {
     }
 
 
-    public   static boolean initGooglePay() {
+    public   static boolean initGooglePay(Context mContext) {
         Wallet.WalletOptions walletOptions =
                 new Wallet.WalletOptions.Builder().setEnvironment(WalletConstants.ENVIRONMENT_TEST).build();
         CheckoutActivity.paymentsClient =  Wallet.getPaymentsClient(mContext, walletOptions);
@@ -94,7 +95,7 @@ public class CheckoutActivity extends AppCompatActivity {
 //     }
 
 
-    public  static void canUseGooglePay(JSONObject isReadyToPayRequest,  CallbackContext callbackContext  ) {
+    public  static void canUseGooglePay(Context mContext,JSONObject isReadyToPayRequest,  CallbackContext callbackContext  ) {
 
         final Optional<JSONObject> isReadyToPayJson = Optional.of(isReadyToPayRequest);
         if (!isReadyToPayJson.isPresent()) {
