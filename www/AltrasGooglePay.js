@@ -11,3 +11,7 @@ module.exports.initGooglePay = function (arg0, success, error) {
 module.exports.canUseGooglePay = function (arg0, success, error) {
   exec(success, error, "AltrasGooglePay", "canUseGooglePay", [arg0]);
 };
+
+module.exports.requestPayment = function (arg0, success, error) {
+  exec(success, error, "AltrasGooglePay", "requestPayment", [arg0]);
+};
