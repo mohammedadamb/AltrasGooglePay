@@ -36,6 +36,7 @@ public class CheckoutActivity extends AppCompatActivity {
 
     private static final int LOAD_PAYMENT_DATA_REQUEST_CODE = 991;
     public static final int PAYMENTS_ENVIRONMENT = WalletConstants.ENVIRONMENT_TEST;
+    private static Context mContext;
 
     private static PaymentsClient paymentsClient;
 
@@ -48,7 +49,7 @@ public class CheckoutActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         // Set up the mock information for our item in the UI.
-
+        mContext = this;
 
 
         // Initialize a Google Pay API client for an environment suitable for testing.
@@ -61,7 +62,7 @@ public class CheckoutActivity extends AppCompatActivity {
     public   static boolean initGooglePay() {
         Wallet.WalletOptions walletOptions =
                 new Wallet.WalletOptions.Builder().setEnvironment(WalletConstants.ENVIRONMENT_TEST).build();
-        CheckoutActivity.paymentsClient =  Wallet.getPaymentsClient(CheckoutActivity.this, walletOptions);
+        CheckoutActivity.paymentsClient =  Wallet.getPaymentsClient(CheckoutActivity.class, walletOptions);
         return true ;
     }
 
