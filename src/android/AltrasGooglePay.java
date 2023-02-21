@@ -50,6 +50,7 @@ public class AltrasGooglePay extends CordovaPlugin {
 
     private PaymentsClient paymentsClient;
     private CordovaInterface cordovaInterface;
+    private CallbackContext mCallbackContext;
 
     @Override
     public void initialize(CordovaInterface cordova, CordovaWebView webView) {
@@ -58,11 +59,8 @@ public class AltrasGooglePay extends CordovaPlugin {
 
     @Override
     public boolean execute(String action, JSONArray args, CallbackContext callbackContext) throws JSONException {
-        if (action.equals("coolMethod")) {
-            String message = args.getString(0); 
-            this.coolMethod(message, callbackContext);
-            return true;
-        }
+        this.mCallbackContext = callbackContext ;
+        
         if (action.equals("initGooglePay")) {
             // String message = args.getString(0); 
             this.initGooglePay( callbackContext);
@@ -145,7 +143,7 @@ public class AltrasGooglePay extends CordovaPlugin {
         // This price is not displayed to the user.
 //        try {
             ;
-            long priceCents = 56.3;
+            // long priceCents = 56.3;
 
             Optional<JSONObject> paymentDataRequestJson = Optional.of(paymentDataRequest);
             if (!paymentDataRequestJson.isPresent()) {
@@ -169,11 +167,92 @@ public class AltrasGooglePay extends CordovaPlugin {
 //        }
     }
 
-    private void coolMethod(String message, CallbackContext callbackContext) {
-        if (message != null && message.length() > 0) {
-            callbackContext.success(message);
-        } else {
-            callbackContext.error("Expected one non-empty string argument.");
+    /**
+     * Handle a resolved activity from the Google Pay payment sheet.
+     *
+     * @param requestCode Request code originally supplied to AutoResolveHelper in requestPayment().
+     * @param resultCode  Result code returned by the Google Pay API.
+     * @param data        Intent from the Google Pay API containing payment or error data.
+     * @see <a href="https://developer.android.com/training/basics/intents/result">Getting a result
+     * from an Activity</a>
+     */
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        JSONObject response = new JSONObject() ;
+        switch (requestCode) {
+            // value passed in AutoResolveHelper
+            case LOAD_PAYMENT_DATA_REQUEST_CODE:
+            try {
+                switch (resultCode) {
+
+                    case Activity.RESULT_OK:
+                        PaymentData paymentData = PaymentData.getFromIntent(data);
+                        handlePaymentSuccess(paymentData);
+                        break;
+
+                    case Activity.RESULT_CANCELED:
+                     response.put("status", 21).put("message", "customer canceled the payment");
+                    this.mCallbackContext.success(response);
+
+                        // The user cancelled the payment attempt
+                        break;
+
+                    case AutoResolveHelper.RESULT_ERROR:
+                        Status status = AutoResolveHelper.getStatusFromIntent(data);
+                        // handleError(status.getStatusCode());
+                         response.put("status", 11).put("message", "customer canceled the payment").put("googleStatusCode", status.getStatusCode());
+                        this.mCallbackContext.error(response);
+                        break;
+                }
+
+        } catch (JSONException e) {
+            throw new RuntimeException("Json Exception");
+        }
+
+                // Re-enables the Google Pay payment button.
+//                googlePayButton.setClickable(true);
         }
     }
+
+
+    /**
+     * PaymentData response object contains the payment information, as well as any additional
+     * requested information, such as billing and shipping address.
+     *
+     * @param paymentData A response object returned by Google after a payer approves payment.
+     * @see <a href="https://developers.google.com/pay/api/android/reference/
+     * object#PaymentData">PaymentData</a>
+     */
+    private void handlePaymentSuccess(PaymentData paymentData) {
+
+        // Token will be null if PaymentDataRequest was not constructed using fromJson(String).
+        final String paymentInfo = paymentData.toJson();
+        if (paymentInfo == null) {
+            return;
+        }
+
+        try {
+            JSONObject paymentMethodData = new JSONObject(paymentInfo);
+            JSONObject response = new JSONObject().put("status", 0).put("paymentData", paymentMethodData);
+            this.mCallbackContext.success(response);
+            // JSONObject paymentMethodData = new JSONObject(paymentInfo).getJSONObject("paymentMethodData");
+            // If the gateway is set to "example", no payment information is returned - instead, the
+            // token will only consist of "examplePaymentMethodToken".
+            // final JSONObject tokenizationData = paymentMethodData.getJSONObject("tokenizationData");
+            // final String token = tokenizationData.getString("token");
+            // final JSONObject info = paymentMethodData.getJSONObject("info");
+            // final String billingName = info.getJSONObject("billingAddress").getString("name");
+            // Toast.makeText(
+            //         this, "Successfully received payment data for",
+            //         Toast.LENGTH_LONG).show();
+
+            // Logging token string.
+            // Log.d("Google Pay token: ", token);
+
+        } catch (JSONException e) {
+            throw new RuntimeException("Json Exception");
+        }
+    }
+
 }
