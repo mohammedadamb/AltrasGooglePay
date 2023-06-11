@@ -229,7 +229,7 @@ public class AltrasGooglePay extends CordovaPlugin {
         // Token will be null if PaymentDataRequest was not constructed using fromJson(String).
         final String paymentInfo = paymentData.toJson();
          Toast.makeText(
-                    this, paymentInfo,
+                    this.cordovaInterface.getActivity(), paymentInfo,
                     Toast.LENGTH_LONG).show();
         if (paymentInfo == null) {
             return;
@@ -247,7 +247,7 @@ public class AltrasGooglePay extends CordovaPlugin {
             // final JSONObject info = paymentMethodData.getJSONObject("info");
             // final String billingName = info.getJSONObject("billingAddress").getString("name");
             Toast.makeText(
-                    this, "Successfully received payment data",
+                    this.cordovaInterface.getActivity(), "Successfully received payment data",
                     Toast.LENGTH_LONG).show();
 
             // Logging token string.
