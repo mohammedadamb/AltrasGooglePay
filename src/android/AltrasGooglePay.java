@@ -148,7 +148,7 @@ public class AltrasGooglePay extends CordovaPlugin {
 
             Optional<JSONObject> paymentDataRequestJson = Optional.of(paymentDataRequest);
             if (!paymentDataRequestJson.isPresent()) {
-                response.put("status", 11).put("message", "invalid request body").put("googleStatusCode", status.getStatusCode());
+                response.put("status", 11).put("message", "invalid request body");
                 this.mCallbackContext.error(response);
                 return;
             }
@@ -164,7 +164,7 @@ public class AltrasGooglePay extends CordovaPlugin {
                         this.paymentsClient.loadPaymentData(request),
                         this.cordovaInterface.getActivity(), LOAD_PAYMENT_DATA_REQUEST_CODE);
             }
-             response.put("status", 11).put("message", "invalid request body 2").put("googleStatusCode", status.getStatusCode());
+             response.put("status", 11).put("message", "invalid request body 2");
                 this.mCallbackContext.error(response);
 
 //        } catch (JSONException e) {
@@ -185,7 +185,7 @@ public class AltrasGooglePay extends CordovaPlugin {
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         JSONObject response = new JSONObject() ;
-         response.put("status", 11).put("message", "getting response ").put("googleStatusCode", status.getStatusCode());
+         response.put("status", 11).put("message", "getting response ");
                 this.mCallbackContext.error(response);
         switch (requestCode) {
             // value passed in AutoResolveHelper
@@ -208,7 +208,7 @@ public class AltrasGooglePay extends CordovaPlugin {
                     case AutoResolveHelper.RESULT_ERROR:
                         Status status = AutoResolveHelper.getStatusFromIntent(data);
                         // handleError(status.getStatusCode());
-                         response.put("status", 11).put("message", "customer canceled the payment 2").put("googleStatusCode", status.getStatusCode());
+                         response.put("status", 11).put("message", "customer canceled the payment 2");
                         this.mCallbackContext.error(response);
                         break;
                 }
