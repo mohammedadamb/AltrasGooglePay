@@ -32,6 +32,13 @@ import com.google.android.gms.wallet.PaymentDataRequest;
 import com.google.android.gms.wallet.PaymentsClient;
 import com.google.android.gms.wallet.Wallet;
 import com.google.android.gms.wallet.WalletConstants;
+import com.google.android.gms.common.api.ApiException;
+import com.google.android.gms.common.api.ResolvableApiException;
+import androidx.activity.result.contract.ActivityResultContracts;
+import android.app.PendingIntent;
+
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.IntentSenderRequest;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -79,6 +86,26 @@ public class AltrasGooglePay extends CordovaPlugin {
         return false;
     }
 
+     // Handle potential conflict from calling loadPaymentData.
+  ActivityResultLauncher<IntentSenderRequest> resolvePaymentForResult = registerForActivityResult(
+      new ActivityResultContracts.StartIntentSenderForResult(),
+      result -> {
+        switch (result.getResultCode()) {
+          case Activity.RESULT_OK:
+            Intent resultData = result.getData();
+            if (resultData != null) {
+              PaymentData paymentData = PaymentData.getFromIntent(result.getData());
+              if (paymentData != null) {
+                handlePaymentSuccess(paymentData);
+              }
+            }
+            break;
+
+          case Activity.RESULT_CANCELED:
+            // The user cancelled the payment attempt
+            break;
+        }
+      });
     private  void initGooglePay( CallbackContext callbackContext) {
         // Intent myIntent = new Intent(CheckoutActivity.this, Katra_home.class);
         // startActivity(myIntent);
@@ -124,8 +151,8 @@ public class AltrasGooglePay extends CordovaPlugin {
                             }
                             // setGooglePayAvailable(task.getResult());
                         } else {
-                            // Log.w("isReadyToPay failed", task.getException());
-                            callbackContext.error("isReadyToPay failed");
+                            Log.w("isReadyToPay failed", task.getException());
+                            callbackContext.error("isReadyToPay failed : " + task.getException());
 
                         }
                     }
@@ -133,6 +160,39 @@ public class AltrasGooglePay extends CordovaPlugin {
     //    CheckoutActivity.canUseGooglePay(this.cordovaInterface.getActivity(), isReadyToPayRequest, callbackContext);
     }
 
+
+//     private void requestPayment(JSONObject paymentDataRequest, CallbackContext callbackContext) {
+
+//         // Disables the button to prevent multiple clicks.
+// //        googlePayButton.setClickable(false);
+
+//         // The price provided to the API should include taxes and shipping.
+//         // This price is not displayed to the user.
+// //        try {
+//             ;
+//             // long priceCents = 56.3;
+
+//             Optional<JSONObject> paymentDataRequestJson = Optional.of(paymentDataRequest);
+//             if (!paymentDataRequestJson.isPresent()) {
+//                 this.mCallbackContext.error("invalid request body");
+//                 return;
+//             }
+
+//             PaymentDataRequest request =
+//                     PaymentDataRequest.fromJson(paymentDataRequestJson.get().toString());
+
+//             // Since loadPaymentData may show the UI asking the user to select a payment method, we use
+//             // AutoResolveHelper to wait for the user interacting with it. Once completed,
+//             // onActivityResult will be called with the result.
+//             if (request != null) {
+//                 AutoResolveHelper.resolveTask(
+//                         this.paymentsClient.loadPaymentData(request),
+//                         this.cordovaInterface.getActivity(), LOAD_PAYMENT_DATA_REQUEST_CODE);
+//             }
+
+//             this.mCallbackContext.error("invalid request body 2");
+
+//     }
 
     private void requestPayment(JSONObject paymentDataRequest, CallbackContext callbackContext) {
 
@@ -157,13 +217,37 @@ public class AltrasGooglePay extends CordovaPlugin {
             // Since loadPaymentData may show the UI asking the user to select a payment method, we use
             // AutoResolveHelper to wait for the user interacting with it. Once completed,
             // onActivityResult will be called with the result.
-            if (request != null) {
-                AutoResolveHelper.resolveTask(
-                        this.paymentsClient.loadPaymentData(request),
-                        this.cordovaInterface.getActivity(), LOAD_PAYMENT_DATA_REQUEST_CODE);
-            }
+            final Task<PaymentData> task = this.paymentsClient.loadPaymentData(request);
+             task.addOnCompleteListener(completedTask -> {
+        if (completedTask.isSuccessful()) {
+        handlePaymentSuccess(completedTask.getResult());
+      } else {
+        Exception exception = completedTask.getException();
+        if (exception instanceof ResolvableApiException) {
+          PendingIntent resolution = ((ResolvableApiException) exception).getResolution();
+          resolvePaymentForResult.launch(new IntentSenderRequest.Builder(resolution).build());
 
-            this.mCallbackContext.error("invalid request body 2");
+        } else if (exception instanceof ApiException) {
+          ApiException apiException = (ApiException) exception;
+            this.mCallbackContext.error("api error 11");
+
+        //   handleError(apiException.getStatusCode(), apiException.getMessage());
+
+        } else {
+        this.mCallbackContext.error("api error");
+        //   handleError(CommonStatusCodes.INTERNAL_ERROR, "Unexpected non API" +
+        //       " exception when trying to deliver the task result to an activity!");
+        }
+      }
+
+      // Re-enables the Google Pay payment button.
+    });
+            // if (request != null) {
+            //     AutoResolveHelper.resolveTask(
+            //             this.paymentsClient.loadPaymentData(request),
+            //             this.cordovaInterface.getActivity(), LOAD_PAYMENT_DATA_REQUEST_CODE);
+            // }
+
 
 //        } catch (JSONException e) {
 //            throw new RuntimeException("The price cannot be deserialized from the JSON object.");
