@@ -218,6 +218,11 @@ public class AltrasGooglePay extends CordovaPlugin {
             // AutoResolveHelper to wait for the user interacting with it. Once completed,
             // onActivityResult will be called with the result.
             final Task<PaymentData> task = this.paymentsClient.loadPaymentData(request);
+             if (request != null) {
+                AutoResolveHelper.resolveTask(
+                        this.paymentsClient.loadPaymentData(request),
+                        this.cordovaInterface.getActivity(), LOAD_PAYMENT_DATA_REQUEST_CODE);
+            }
              task.addOnCompleteListener(completedTask -> {
         if (completedTask.isSuccessful()) {
         handlePaymentSuccess(completedTask.getResult());
@@ -226,6 +231,9 @@ public class AltrasGooglePay extends CordovaPlugin {
         if (exception instanceof ResolvableApiException) {
         //   PendingIntent resolution = ((ResolvableApiException) exception).getResolution();
         //   resolvePaymentForResult.launch(new IntentSenderRequest.Builder(resolution).build());
+         AutoResolveHelper.resolveTask(
+                    task,
+                    this.cordovaInterface.getActivity(), LOAD_PAYMENT_DATA_REQUEST_CODE);
             this.mCallbackContext.error("api error 11");
 
         } else if (exception instanceof ApiException) {
