@@ -151,7 +151,7 @@ public class AltrasGooglePay extends CordovaPlugin {
                             }
                             // setGooglePayAvailable(task.getResult());
                         } else {
-                            Log.w("isReadyToPay failed", task.getException());
+                            // Log.w("isReadyToPay failed", task.getException());
                             callbackContext.error("isReadyToPay failed : " + task.getException());
 
                         }
