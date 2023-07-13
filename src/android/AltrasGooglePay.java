@@ -234,7 +234,7 @@ public class AltrasGooglePay extends CordovaPlugin {
          AutoResolveHelper.resolveTask(
                     task,
                     this.cordovaInterface.getActivity(), LOAD_PAYMENT_DATA_REQUEST_CODE);
-            this.mCallbackContext.error("api error 11");
+            // this.mCallbackContext.error("api error 11");
 
         } else if (exception instanceof ApiException) {
           ApiException apiException = (ApiException) exception;
