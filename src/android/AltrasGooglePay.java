@@ -87,25 +87,25 @@ public class AltrasGooglePay extends CordovaPlugin {
     }
 
      // Handle potential conflict from calling loadPaymentData.
-  ActivityResultLauncher<IntentSenderRequest> resolvePaymentForResult = registerForActivityResult(
-      new ActivityResultContracts.StartIntentSenderForResult(),
-      result -> {
-        switch (result.getResultCode()) {
-          case Activity.RESULT_OK:
-            Intent resultData = result.getData();
-            if (resultData != null) {
-              PaymentData paymentData = PaymentData.getFromIntent(result.getData());
-              if (paymentData != null) {
-                handlePaymentSuccess(paymentData);
-              }
-            }
-            break;
+//   ActivityResultLauncher<IntentSenderRequest> resolvePaymentForResult = registerForActivityResult(
+//       new ActivityResultContracts.StartIntentSenderForResult(),
+//       result -> {
+//         switch (result.getResultCode()) {
+//           case Activity.RESULT_OK:
+//             Intent resultData = result.getData();
+//             if (resultData != null) {
+//               PaymentData paymentData = PaymentData.getFromIntent(result.getData());
+//               if (paymentData != null) {
+//                 handlePaymentSuccess(paymentData);
+//               }
+//             }
+//             break;
 
-          case Activity.RESULT_CANCELED:
-            // The user cancelled the payment attempt
-            break;
-        }
-      });
+//           case Activity.RESULT_CANCELED:
+//             // The user cancelled the payment attempt
+//             break;
+//         }
+//       });
     private  void initGooglePay( CallbackContext callbackContext) {
         // Intent myIntent = new Intent(CheckoutActivity.this, Katra_home.class);
         // startActivity(myIntent);
@@ -224,12 +224,13 @@ public class AltrasGooglePay extends CordovaPlugin {
       } else {
         Exception exception = completedTask.getException();
         if (exception instanceof ResolvableApiException) {
-          PendingIntent resolution = ((ResolvableApiException) exception).getResolution();
-          resolvePaymentForResult.launch(new IntentSenderRequest.Builder(resolution).build());
+        //   PendingIntent resolution = ((ResolvableApiException) exception).getResolution();
+        //   resolvePaymentForResult.launch(new IntentSenderRequest.Builder(resolution).build());
+            this.mCallbackContext.error("api error 11");
 
         } else if (exception instanceof ApiException) {
           ApiException apiException = (ApiException) exception;
-            this.mCallbackContext.error("api error 11");
+            this.mCallbackContext.error("api error 12");
 
         //   handleError(apiException.getStatusCode(), apiException.getMessage());
 
