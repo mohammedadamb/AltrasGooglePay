@@ -110,7 +110,7 @@ public class AltrasGooglePay extends CordovaPlugin {
         // Intent myIntent = new Intent(CheckoutActivity.this, Katra_home.class);
         // startActivity(myIntent);
          Wallet.WalletOptions walletOptions = null ;
-        if(mode === "PRODUCTION"){
+        if(mode == "PRODUCTION"){
             walletOptions =
                 new Wallet.WalletOptions.Builder().setEnvironment(WalletConstants.ENVIRONMENT_PRODUCTION).build();
         } else {
