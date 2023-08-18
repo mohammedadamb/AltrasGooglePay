@@ -110,16 +110,17 @@ public class AltrasGooglePay extends CordovaPlugin {
         // Intent myIntent = new Intent(CheckoutActivity.this, Katra_home.class);
         // startActivity(myIntent);
          Wallet.WalletOptions walletOptions = null ;
-        if(mode == "PRODUCTION"){
-            walletOptions =
+        // if(mode == "PRODUCTION"){
+        //     walletOptions =
+        //         new Wallet.WalletOptions.Builder().setEnvironment(WalletConstants.ENVIRONMENT_PRODUCTION).build();
+        // } else {
+        //     walletOptions =
+        //         new Wallet.WalletOptions.Builder().setEnvironment(WalletConstants.ENVIRONMENT_TEST).build();
+        // }
+        walletOptions =
                 new Wallet.WalletOptions.Builder().setEnvironment(WalletConstants.ENVIRONMENT_PRODUCTION).build();
-        } else {
-            walletOptions =
-                new Wallet.WalletOptions.Builder().setEnvironment(WalletConstants.ENVIRONMENT_TEST).build();
-        }
-       
         this.paymentsClient =  Wallet.getPaymentsClient(this.cordovaInterface.getActivity(), walletOptions);
-        callbackContext.success("init successfully");
+        callbackContext.success("init successfully" + mode);
 
 
 
@@ -224,11 +225,11 @@ public class AltrasGooglePay extends CordovaPlugin {
             // AutoResolveHelper to wait for the user interacting with it. Once completed,
             // onActivityResult will be called with the result.
             final Task<PaymentData> task = this.paymentsClient.loadPaymentData(request);
-             if (request != null) {
-                AutoResolveHelper.resolveTask(
-                        this.paymentsClient.loadPaymentData(request),
-                        this.cordovaInterface.getActivity(), LOAD_PAYMENT_DATA_REQUEST_CODE);
-            }
+            //  if (request != null) {
+            //     AutoResolveHelper.resolveTask(
+            //             this.paymentsClient.loadPaymentData(request),
+            //             this.cordovaInterface.getActivity(), LOAD_PAYMENT_DATA_REQUEST_CODE);
+            // }
              task.addOnCompleteListener(completedTask -> {
         if (completedTask.isSuccessful()) {
         handlePaymentSuccess(completedTask.getResult());
