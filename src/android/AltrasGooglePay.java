@@ -240,7 +240,7 @@ public class AltrasGooglePay extends CordovaPlugin {
         handlePaymentSuccess(completedTask.getResult());
       } else {
         Exception exception = completedTask.getException();
-        this.mCallbackContext.error(exception.getMessage());
+        // this.mCallbackContext.error(exception.getMessage());
 
         if (exception instanceof ResolvableApiException) {
           PendingIntent resolution = ((ResolvableApiException) exception).getResolution();
@@ -248,7 +248,7 @@ public class AltrasGooglePay extends CordovaPlugin {
          AutoResolveHelper.resolveTask(
                     task,
                     this.cordovaInterface.getActivity(), LOAD_PAYMENT_DATA_REQUEST_CODE);
-            this.mCallbackContext.error(exception.getMessage());
+            // this.mCallbackContext.error(exception.getMessage());
 
         } else if (exception instanceof ApiException) {
           ApiException apiException = (ApiException) exception;
@@ -290,7 +290,7 @@ public class AltrasGooglePay extends CordovaPlugin {
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         JSONObject response = new JSONObject() ;
-                this.mCallbackContext.error("getting response ");
+                // this.mCallbackContext.error("getting response ");
         switch (requestCode) {
             // value passed in AutoResolveHelper
             case LOAD_PAYMENT_DATA_REQUEST_CODE:
