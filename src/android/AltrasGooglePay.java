@@ -236,8 +236,8 @@ public class AltrasGooglePay extends CordovaPlugin {
       } else {
         Exception exception = completedTask.getException();
         if (exception instanceof ResolvableApiException) {
-        //   PendingIntent resolution = ((ResolvableApiException) exception).getResolution();
-        //   resolvePaymentForResult.launch(new IntentSenderRequest.Builder(resolution).build());
+          PendingIntent resolution = ((ResolvableApiException) exception).getResolution();
+          resolvePaymentForResult.launch(new IntentSenderRequest.Builder(resolution).build());
          AutoResolveHelper.resolveTask(
                     task,
                     this.cordovaInterface.getActivity(), LOAD_PAYMENT_DATA_REQUEST_CODE);
