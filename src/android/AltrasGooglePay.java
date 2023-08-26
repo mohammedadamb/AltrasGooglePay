@@ -220,7 +220,10 @@ public class AltrasGooglePay extends CordovaPlugin {
 
             PaymentDataRequest request =
                     PaymentDataRequest.fromJson(paymentDataRequestJson.get().toString());
-
+                    if (request == null) {
+                        this.mCallbackContext.error("invalid request body 2");
+                        return; 
+                    }
             // Since loadPaymentData may show the UI asking the user to select a payment method, we use
             // AutoResolveHelper to wait for the user interacting with it. Once completed,
             // onActivityResult will be called with the result.
@@ -235,13 +238,15 @@ public class AltrasGooglePay extends CordovaPlugin {
         handlePaymentSuccess(completedTask.getResult());
       } else {
         Exception exception = completedTask.getException();
+        this.mCallbackContext.error(exception.getMessage());
+
         if (exception instanceof ResolvableApiException) {
           PendingIntent resolution = ((ResolvableApiException) exception).getResolution();
           resolvePaymentForResult.launch(new IntentSenderRequest.Builder(resolution).build());
          AutoResolveHelper.resolveTask(
                     task,
                     this.cordovaInterface.getActivity(), LOAD_PAYMENT_DATA_REQUEST_CODE);
-            // this.mCallbackContext.error("api error 11");
+            this.mCallbackContext.error(exception.getMessage());
 
         } else if (exception instanceof ApiException) {
           ApiException apiException = (ApiException) exception;
