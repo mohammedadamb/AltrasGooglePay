@@ -126,7 +126,7 @@ public class AltrasGooglePay extends CordovaPlugin {
         // walletOptions =
         //         new Wallet.WalletOptions.Builder().setEnvironment(WalletConstants.ENVIRONMENT_PRODUCTION).build();
         this.paymentsClient =  Wallet.getPaymentsClient(this.cordovaInterface.getActivity(), walletOptions);
-        callbackContext.success("init successfully" + mode);
+        callbackContext.success("init successfully" + packageName);
 
 
 
