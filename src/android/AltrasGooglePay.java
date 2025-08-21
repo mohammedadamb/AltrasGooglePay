@@ -111,16 +111,20 @@ public class AltrasGooglePay extends CordovaPlugin {
     private  void initGooglePay( CallbackContext callbackContext, String mode) {
         // Intent myIntent = new Intent(CheckoutActivity.this, Katra_home.class);
         // startActivity(myIntent);
+        String packageName = "";
          Wallet.WalletOptions walletOptions = null ;
-        // if(mode == "PRODUCTION"){
-        //     walletOptions =
-        //         new Wallet.WalletOptions.Builder().setEnvironment(WalletConstants.ENVIRONMENT_PRODUCTION).build();
-        // } else {
-        //     walletOptions =
-        //         new Wallet.WalletOptions.Builder().setEnvironment(WalletConstants.ENVIRONMENT_TEST).build();
-        // }
-        walletOptions =
+        if(mode == "PRODUCTION"){
+            packageName = "mode_production";
+            walletOptions =
                 new Wallet.WalletOptions.Builder().setEnvironment(WalletConstants.ENVIRONMENT_PRODUCTION).build();
+        } else {
+                        packageName = "mode_test";
+
+            walletOptions =
+                new Wallet.WalletOptions.Builder().setEnvironment(WalletConstants.ENVIRONMENT_TEST).build();
+        }
+        // walletOptions =
+        //         new Wallet.WalletOptions.Builder().setEnvironment(WalletConstants.ENVIRONMENT_PRODUCTION).build();
         this.paymentsClient =  Wallet.getPaymentsClient(this.cordovaInterface.getActivity(), walletOptions);
         callbackContext.success("init successfully" + mode);
 
