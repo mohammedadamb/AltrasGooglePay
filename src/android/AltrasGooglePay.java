@@ -28,6 +28,8 @@ import com.google.android.gms.wallet.Wallet;
 import com.google.android.gms.wallet.WalletConstants;
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.common.api.ResolvableApiException;
+import android.app.PendingIntent;
+
 
 import java.util.Optional;
 
@@ -35,6 +37,7 @@ public class AltrasGooglePay extends CordovaPlugin {
     private static final int LOAD_PAYMENT_DATA_REQUEST_CODE = 991;
     private static final String TAG = "AltrasGooglePay";
 
+    private CordovaInterface cordovaInterface;
     private PaymentsClient paymentsClient;
     private CallbackContext currentPaymentCallbackContext;
     private boolean isPaymentInProgress = false;
@@ -178,7 +181,7 @@ public class AltrasGooglePay extends CordovaPlugin {
         handlePaymentSuccess(completedTask.getResult());
       } else {
         Exception exception = completedTask.getException();
-        // this.mCallbackContext.error(exception.getMessage());
+        // currentPaymentCallbackContext.error(exception.getMessage());
 
         if (exception instanceof ResolvableApiException) {
           PendingIntent resolution = ((ResolvableApiException) exception).getResolution();
@@ -186,16 +189,16 @@ public class AltrasGooglePay extends CordovaPlugin {
          AutoResolveHelper.resolveTask(
                     task,
                     this.cordovaInterface.getActivity(), LOAD_PAYMENT_DATA_REQUEST_CODE);
-            // this.mCallbackContext.error(exception.getMessage());
+            // currentPaymentCallbackContext.error(exception.getMessage());
 
         } else if (exception instanceof ApiException) {
           ApiException apiException = (ApiException) exception;
-            this.mCallbackContext.error("api error 12");
+            currentPaymentCallbackContext.error("api error 12");
 
         //   handleError(apiException.getStatusCode(), apiException.getMessage());
 
         } else {
-        this.mCallbackContext.error("api error");
+        currentPaymentCallbackContext.error("api error");
         //   handleError(CommonStatusCodes.INTERNAL_ERROR, "Unexpected non API" +
         //       " exception when trying to deliver the task result to an activity!");
         }
