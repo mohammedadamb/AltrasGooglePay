@@ -173,8 +173,36 @@ public class AltrasGooglePay extends CordovaPlugin {
                 public void run() {
                     try {
                         Task<PaymentData> task = paymentsClient.loadPaymentData(request);
-                        AutoResolveHelper.resolveTask(task, cordova.getActivity(), LOAD_PAYMENT_DATA_REQUEST_CODE);
-                    } catch (Exception e) {
+ task.addOnCompleteListener(completedTask -> {
+        if (completedTask.isSuccessful()) {
+        handlePaymentSuccess(completedTask.getResult());
+      } else {
+        Exception exception = completedTask.getException();
+        // this.mCallbackContext.error(exception.getMessage());
+
+        if (exception instanceof ResolvableApiException) {
+          PendingIntent resolution = ((ResolvableApiException) exception).getResolution();
+        //   resolvePaymentForResult.launch(new IntentSenderRequest.Builder(resolution).build());
+         AutoResolveHelper.resolveTask(
+                    task,
+                    this.cordovaInterface.getActivity(), LOAD_PAYMENT_DATA_REQUEST_CODE);
+            // this.mCallbackContext.error(exception.getMessage());
+
+        } else if (exception instanceof ApiException) {
+          ApiException apiException = (ApiException) exception;
+            this.mCallbackContext.error("api error 12");
+
+        //   handleError(apiException.getStatusCode(), apiException.getMessage());
+
+        } else {
+        this.mCallbackContext.error("api error");
+        //   handleError(CommonStatusCodes.INTERNAL_ERROR, "Unexpected non API" +
+        //       " exception when trying to deliver the task result to an activity!");
+        }
+      }
+
+      // Re-enables the Google Pay payment button.
+    });                    } catch (Exception e) {
                         Log.e(TAG, "Error starting payment: " + e.getMessage());
                         resetPaymentState();
                         currentPaymentCallbackContext.error("Failed to start payment: " + e.getMessage());
