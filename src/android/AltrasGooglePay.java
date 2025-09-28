@@ -9,18 +9,12 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-
-
 import android.app.Activity;
 import android.content.Intent;
-import android.os.Bundle;
-import android.text.Html;
 import android.util.Log;
-import android.view.View;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.gms.common.api.Status;
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -34,45 +28,32 @@ import com.google.android.gms.wallet.Wallet;
 import com.google.android.gms.wallet.WalletConstants;
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.common.api.ResolvableApiException;
-import androidx.activity.result.contract.ActivityResultContracts;
-import android.app.PendingIntent;
 
-import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.IntentSenderRequest;
-
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.util.Locale;
 import java.util.Optional;
 
-import uk.co.altras.altrasGooglePay.CheckoutActivity;
-
-/**
- * This class echoes a string called from JavaScript.
- */
 public class AltrasGooglePay extends CordovaPlugin {
     private static final int LOAD_PAYMENT_DATA_REQUEST_CODE = 991;
+    private static final String TAG = "AltrasGooglePay";
 
     private PaymentsClient paymentsClient;
-    private CordovaInterface cordovaInterface;
-    private CallbackContext mCallbackContext;
+    private CallbackContext currentPaymentCallbackContext;
+    private boolean isPaymentInProgress = false;
+    private long lastPaymentRequestTime = 0;
+    private static final long MIN_PAYMENT_INTERVAL = 3000; // 3 seconds cooldown
 
     @Override
     public void initialize(CordovaInterface cordova, CordovaWebView webView) {
-        this.cordovaInterface = cordova;
-        cordova.setActivityResultCallback (this);
-
+        super.initialize(cordova, webView);
+        this.cordova.setActivityResultCallback(this);
     }
 
     @Override
     public boolean execute(String action, JSONArray args, CallbackContext callbackContext) throws JSONException {
-        this.mCallbackContext = callbackContext ;
+        Log.d(TAG, "Executing action: " + action);
         
         if (action.equals("initGooglePay")) {
             String mode = args.getString(0); 
-            this.initGooglePay( callbackContext, mode);
+            this.initGooglePay(callbackContext, mode);
             return true;
         }
         if (action.equals("canUseGooglePay")) {
@@ -85,292 +66,228 @@ public class AltrasGooglePay extends CordovaPlugin {
             this.requestPayment(paymentDataRequest, callbackContext);
             return true;
         }
+        if (action.equals("resetPaymentState")) {
+            this.resetPaymentState(callbackContext);
+            return true;
+        }
         return false;
     }
 
-    //  Handle potential conflict from calling loadPaymentData.
-//   ActivityResultLauncher<IntentSenderRequest> resolvePaymentForResult = registerForActivityResult(
-//       new ActivityResultContracts.StartIntentSenderForResult(),
-//       result -> {
-//         switch (result.getResultCode()) {
-//           case Activity.RESULT_OK:
-//             Intent resultData = result.getData();
-//             if (resultData != null) {
-//               PaymentData paymentData = PaymentData.getFromIntent(result.getData());
-//               if (paymentData != null) {
-//                 handlePaymentSuccess(paymentData);
-//               }
-//             }
-//             break;
-
-//           case Activity.RESULT_CANCELED:
-//             // The user cancelled the payment attempt
-//             break;
-//         }
-//       });
-    private  void initGooglePay( CallbackContext callbackContext, String mode) {
-        // Intent myIntent = new Intent(CheckoutActivity.this, Katra_home.class);
-        // startActivity(myIntent);
-        String packageName = "";
-         Wallet.WalletOptions walletOptions = null ;
-        // if(mode == "PRODUCTION"){
-        //     packageName = "mode_production";
-        //     walletOptions =
-        //         new Wallet.WalletOptions.Builder().setEnvironment(WalletConstants.ENVIRONMENT_PRODUCTION).build();
-        // } else {
-        //                 packageName = "mode_test";
-
-        //     walletOptions =
-        //         new Wallet.WalletOptions.Builder().setEnvironment(WalletConstants.ENVIRONMENT_TEST).build();
-        // }
-        walletOptions =
-                new Wallet.WalletOptions.Builder().setEnvironment(WalletConstants.ENVIRONMENT_PRODUCTION).build();
-        this.paymentsClient =  Wallet.getPaymentsClient(this.cordovaInterface.getActivity(), walletOptions);
-        callbackContext.success("init successfully" + packageName);
-
-
-
-        // if(CheckoutActivity.initGooglePay(this.cordovaInterface.getActivity())) {
-        //     callbackContext.success("init successfully");
-        // } else {
-        //     callbackContext.error("init successfully");
-        // }
-
-    }
-
-
-
-    private void canUseGooglePay(JSONObject isReadyToPayRequest, CallbackContext callbackContext ) {
-
-        final Optional<JSONObject> isReadyToPayJson = Optional.of(isReadyToPayRequest);
-        if (!isReadyToPayJson.isPresent()) {
-            return;
+    private void initGooglePay(CallbackContext callbackContext, String mode) {
+        try {
+            Wallet.WalletOptions walletOptions;
+            if ("PRODUCTION".equals(mode)) {
+                walletOptions = new Wallet.WalletOptions.Builder()
+                    .setEnvironment(WalletConstants.ENVIRONMENT_PRODUCTION)
+                    .build();
+            } else {
+                walletOptions = new Wallet.WalletOptions.Builder()
+                    .setEnvironment(WalletConstants.ENVIRONMENT_TEST)
+                    .build();
+            }
+            
+            this.paymentsClient = Wallet.getPaymentsClient(this.cordova.getActivity(), walletOptions);
+            callbackContext.success("Google Pay initialized successfully in " + mode + " mode");
+            
+        } catch (Exception e) {
+            Log.e(TAG, "Init Google Pay error: " + e.getMessage());
+            callbackContext.error("Failed to initialize Google Pay: " + e.getMessage());
         }
-
-        // The call to isReadyToPay is asynchronous and returns a Task. We need to provide an
-        // OnCompleteListener to be triggered when the result of the call is known.
-        IsReadyToPayRequest request = IsReadyToPayRequest.fromJson(isReadyToPayJson.get().toString());
-        Task<Boolean> task = this.paymentsClient.isReadyToPay(request);
-        task.addOnCompleteListener(this.cordovaInterface.getActivity(),
-                new OnCompleteListener<Boolean>() {
-                    @Override
-                    public void onComplete(@NonNull Task<Boolean> task)   {
-                        if (task.isSuccessful()) {
-                            try {
-                            callbackContext.success(new JSONObject().put("Status", 0).put("message", "can use google pay"));
-                            } catch (JSONException ex) {
-                                callbackContext.success("Json Exception");
-
-                            }
-                            // setGooglePayAvailable(task.getResult());
-                        } else {
-                            // Log.w("isReadyToPay failed", task.getException());
-                            callbackContext.error("isReadyToPay failed : " + task.getException() + task.getResult());
-
-                        }
-                    }
-                });
-    //    CheckoutActivity.canUseGooglePay(this.cordovaInterface.getActivity(), isReadyToPayRequest, callbackContext);
     }
 
-
-//     private void requestPayment(JSONObject paymentDataRequest, CallbackContext callbackContext) {
-
-//         // Disables the button to prevent multiple clicks.
-// //        googlePayButton.setClickable(false);
-
-//         // The price provided to the API should include taxes and shipping.
-//         // This price is not displayed to the user.
-// //        try {
-//             ;
-//             // long priceCents = 56.3;
-
-//             Optional<JSONObject> paymentDataRequestJson = Optional.of(paymentDataRequest);
-//             if (!paymentDataRequestJson.isPresent()) {
-//                 this.mCallbackContext.error("invalid request body");
-//                 return;
-//             }
-
-//             PaymentDataRequest request =
-//                     PaymentDataRequest.fromJson(paymentDataRequestJson.get().toString());
-
-//             // Since loadPaymentData may show the UI asking the user to select a payment method, we use
-//             // AutoResolveHelper to wait for the user interacting with it. Once completed,
-//             // onActivityResult will be called with the result.
-//             if (request != null) {
-//                 AutoResolveHelper.resolveTask(
-//                         this.paymentsClient.loadPaymentData(request),
-//                         this.cordovaInterface.getActivity(), LOAD_PAYMENT_DATA_REQUEST_CODE);
-//             }
-
-//             this.mCallbackContext.error("invalid request body 2");
-
-//     }
-
-    private void requestPayment(JSONObject paymentDataRequest, CallbackContext callbackContext) {
-
-        // Disables the button to prevent multiple clicks.
-//        googlePayButton.setClickable(false);
-
-        // The price provided to the API should include taxes and shipping.
-        // This price is not displayed to the user.
-//        try {
-            ;
-            // long priceCents = 56.3;
-
-            Optional<JSONObject> paymentDataRequestJson = Optional.of(paymentDataRequest);
-            if (!paymentDataRequestJson.isPresent()) {
-                this.mCallbackContext.error("invalid request body");
+    private void canUseGooglePay(JSONObject isReadyToPayRequest, CallbackContext callbackContext) {
+        try {
+            final Optional<JSONObject> isReadyToPayJson = Optional.of(isReadyToPayRequest);
+            if (!isReadyToPayJson.isPresent()) {
+                callbackContext.error("Invalid request body");
                 return;
             }
 
-            PaymentDataRequest request =
-                    PaymentDataRequest.fromJson(paymentDataRequestJson.get().toString());
-                    if (request == null) {
-                        this.mCallbackContext.error("invalid request body 2");
-                        return; 
+            IsReadyToPayRequest request = IsReadyToPayRequest.fromJson(isReadyToPayJson.get().toString());
+            Task<Boolean> task = this.paymentsClient.isReadyToPay(request);
+            
+            task.addOnCompleteListener(this.cordova.getActivity(), new OnCompleteListener<Boolean>() {
+                @Override
+                public void onComplete(@NonNull Task<Boolean> task) {
+                    try {
+                        if (task.isSuccessful()) {
+                            boolean isReady = task.getResult();
+                            JSONObject response = new JSONObject();
+                            response.put("status", 0);
+                            response.put("canUseGooglePay", isReady);
+                            response.put("message", isReady ? "Google Pay is available" : "Google Pay not available");
+                            callbackContext.success(response);
+                        } else {
+                            Log.w(TAG, "isReadyToPay failed", task.getException());
+                            callbackContext.error("Google Pay check failed: " + task.getException().getMessage());
+                        }
+                    } catch (Exception e) {
+                        callbackContext.error("Error processing Google Pay availability: " + e.getMessage());
                     }
-            // Since loadPaymentData may show the UI asking the user to select a payment method, we use
-            // AutoResolveHelper to wait for the user interacting with it. Once completed,
-            // onActivityResult will be called with the result.
-            final Task<PaymentData> task = this.paymentsClient.loadPaymentData(request);
-            //  if (request != null) {
-            //     AutoResolveHelper.resolveTask(
-            //             this.paymentsClient.loadPaymentData(request),
-            //             this.cordovaInterface.getActivity(), LOAD_PAYMENT_DATA_REQUEST_CODE);
-            // }
-             task.addOnCompleteListener(completedTask -> {
-        if (completedTask.isSuccessful()) {
-        handlePaymentSuccess(completedTask.getResult());
-      } else {
-        Exception exception = completedTask.getException();
-        // this.mCallbackContext.error(exception.getMessage());
-
-        if (exception instanceof ResolvableApiException) {
-          PendingIntent resolution = ((ResolvableApiException) exception).getResolution();
-        //   resolvePaymentForResult.launch(new IntentSenderRequest.Builder(resolution).build());
-         AutoResolveHelper.resolveTask(
-                    task,
-                    this.cordovaInterface.getActivity(), LOAD_PAYMENT_DATA_REQUEST_CODE);
-            // this.mCallbackContext.error(exception.getMessage());
-
-        } else if (exception instanceof ApiException) {
-          ApiException apiException = (ApiException) exception;
-            this.mCallbackContext.error("api error 12");
-
-        //   handleError(apiException.getStatusCode(), apiException.getMessage());
-
-        } else {
-        this.mCallbackContext.error("api error");
-        //   handleError(CommonStatusCodes.INTERNAL_ERROR, "Unexpected non API" +
-        //       " exception when trying to deliver the task result to an activity!");
-        }
-      }
-
-      // Re-enables the Google Pay payment button.
-    });
-            // if (request != null) {
-            //     AutoResolveHelper.resolveTask(
-            //             this.paymentsClient.loadPaymentData(request),
-            //             this.cordovaInterface.getActivity(), LOAD_PAYMENT_DATA_REQUEST_CODE);
-            // }
-
-
-//        } catch (JSONException e) {
-//            throw new RuntimeException("The price cannot be deserialized from the JSON object.");
-//        }
-    }
-
-    /**
-     * Handle a resolved activity from the Google Pay payment sheet.
-     *
-     * @param requestCode Request code originally supplied to AutoResolveHelper in requestPayment().
-     * @param resultCode  Result code returned by the Google Pay API.
-     * @param data        Intent from the Google Pay API containing payment or error data.
-     * @see <a href="https://developer.android.com/training/basics/intents/result">Getting a result
-     * from an Activity</a>
-     */
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        JSONObject response = new JSONObject() ;
-                // this.mCallbackContext.error("getting response ");
-        switch (requestCode) {
-            // value passed in AutoResolveHelper
-            case LOAD_PAYMENT_DATA_REQUEST_CODE:
-            try {
-                switch (resultCode) {
-
-                    case Activity.RESULT_OK:
-                        PaymentData paymentData = PaymentData.getFromIntent(data);
-                        handlePaymentSuccess(paymentData);
-                        break;
-
-                    case Activity.RESULT_CANCELED:
-                     response.put("status", 21).put("message", "customer canceled the payment");
-                    this.mCallbackContext.success(response);
-
-                        // The user cancelled the payment attempt
-                        break;
-
-                    case AutoResolveHelper.RESULT_ERROR:
-                        Status status = AutoResolveHelper.getStatusFromIntent(data);
-                        // handleError(status.getStatusCode());
-                         response.put("status", 11).put("message", "customer canceled the payment 2");
-                        this.mCallbackContext.error(response);
-                        break;
                 }
-
-        } catch (JSONException e) {
-            throw new RuntimeException("Json Exception");
-        }
-
-                // Re-enables the Google Pay payment button.
-//                googlePayButton.setClickable(true);
+            });
+            
+        } catch (Exception e) {
+            callbackContext.error("Error in canUseGooglePay: " + e.getMessage());
         }
     }
 
-
-    /**
-     * PaymentData response object contains the payment information, as well as any additional
-     * requested information, such as billing and shipping address.
-     *
-     * @param paymentData A response object returned by Google after a payer approves payment.
-     * @see <a href="https://developers.google.com/pay/api/android/reference/
-     * object#PaymentData">PaymentData</a>
-     */
-    private void handlePaymentSuccess(PaymentData paymentData) {
-
-        // Token will be null if PaymentDataRequest was not constructed using fromJson(String).
-        final String paymentInfo = paymentData.toJson();
-        //  Toast.makeText(
-        //             this.cordovaInterface.getActivity(), paymentInfo,
-        //             Toast.LENGTH_LONG).show();
-        if (paymentInfo == null) {
+    private void requestPayment(JSONObject paymentDataRequest, CallbackContext callbackContext) {
+        Log.d(TAG, "requestPayment called");
+        
+        // Check if payment is already in progress
+        if (isPaymentInProgress) {
+            callbackContext.error("Payment already in progress. Please wait.");
+            return;
+        }
+        
+        // Check cooldown period
+        long currentTime = System.currentTimeMillis();
+        if (currentTime - lastPaymentRequestTime < MIN_PAYMENT_INTERVAL) {
+            long waitTime = (MIN_PAYMENT_INTERVAL - (currentTime - lastPaymentRequestTime)) / 1000;
+            callbackContext.error("Please wait " + waitTime + " seconds before another payment");
             return;
         }
 
         try {
-            JSONObject paymentMethodData = new JSONObject(paymentInfo);
-            JSONObject response = new JSONObject().put("status", 0).put("paymentData", paymentMethodData);
-            this.mCallbackContext.success(response);
-            // JSONObject paymentMethodData = new JSONObject(paymentInfo).getJSONObject("paymentMethodData");
-            // If the gateway is set to "example", no payment information is returned - instead, the
-            // token will only consist of "examplePaymentMethodToken".
-            // final JSONObject tokenizationData = paymentMethodData.getJSONObject("tokenizationData");
-            // final String token = tokenizationData.getString("token");
-            // final JSONObject info = paymentMethodData.getJSONObject("info");
-            // final String billingName = info.getJSONObject("billingAddress").getString("name");
-            // Toast.makeText(
-            //         this.cordovaInterface.getActivity(), "Successfully received payment data",
-            //         Toast.LENGTH_LONG).show();
+            Optional<JSONObject> paymentDataRequestJson = Optional.of(paymentDataRequest);
+            if (!paymentDataRequestJson.isPresent()) {
+                callbackContext.error("Invalid payment data request");
+                return;
+            }
 
-            // Logging token string.
-            // Log.d("Google Pay token: ", token);
+            PaymentDataRequest request = PaymentDataRequest.fromJson(paymentDataRequestJson.get().toString());
+            if (request == null) {
+                callbackContext.error("Failed to create payment request");
+                return;
+            }
 
-        } catch (JSONException e) {
-            throw new RuntimeException("Json Exception");
+            // Set payment state
+            this.currentPaymentCallbackContext = callbackContext;
+            this.isPaymentInProgress = true;
+            this.lastPaymentRequestTime = currentTime;
+
+            // Execute on UI thread
+            cordova.getActivity().runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        Task<PaymentData> task = paymentsClient.loadPaymentData(request);
+                        AutoResolveHelper.resolveTask(task, cordova.getActivity(), LOAD_PAYMENT_DATA_REQUEST_CODE);
+                    } catch (Exception e) {
+                        Log.e(TAG, "Error starting payment: " + e.getMessage());
+                        resetPaymentState();
+                        currentPaymentCallbackContext.error("Failed to start payment: " + e.getMessage());
+                    }
+                }
+            });
+
+        } catch (Exception e) {
+            Log.e(TAG, "Error in requestPayment: " + e.getMessage());
+            resetPaymentState();
+            callbackContext.error("Payment request failed: " + e.getMessage());
         }
     }
 
+    private void resetPaymentState(CallbackContext callbackContext) {
+        resetPaymentState();
+        callbackContext.success("Payment state reset successfully");
+    }
+
+    private void resetPaymentState() {
+        Log.d(TAG, "Resetting payment state");
+        this.isPaymentInProgress = false;
+        this.currentPaymentCallbackContext = null;
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        Log.d(TAG, "onActivityResult: requestCode=" + requestCode + ", resultCode=" + resultCode);
+        
+        if (requestCode != LOAD_PAYMENT_DATA_REQUEST_CODE) {
+            return;
+        }
+
+        // Always reset payment state when we get any response
+        boolean wasPaymentInProgress = isPaymentInProgress;
+        resetPaymentState();
+
+        if (currentPaymentCallbackContext == null) {
+            Log.w(TAG, "No callback context for payment result");
+            return;
+        }
+
+        try {
+            switch (resultCode) {
+                case Activity.RESULT_OK:
+                    if (data != null) {
+                        PaymentData paymentData = PaymentData.getFromIntent(data);
+                        if (paymentData != null) {
+                            handlePaymentSuccess(paymentData);
+                        } else {
+                            currentPaymentCallbackContext.error("No payment data received");
+                        }
+                    } else {
+                        currentPaymentCallbackContext.error("No data received from payment");
+                    }
+                    break;
+
+                case Activity.RESULT_CANCELED:
+                    JSONObject cancelResponse = new JSONObject();
+                    cancelResponse.put("status", 21);
+                    cancelResponse.put("message", "Customer cancelled the payment");
+                    currentPaymentCallbackContext.success(cancelResponse);
+                    break;
+
+                case AutoResolveHelper.RESULT_ERROR:
+                    if (data != null) {
+                        Status status = AutoResolveHelper.getStatusFromIntent(data);
+                        JSONObject errorResponse = new JSONObject();
+                        errorResponse.put("status", 11);
+                        errorResponse.put("message", "Payment error: " + (status != null ? status.getStatusMessage() : "Unknown error"));
+                        errorResponse.put("statusCode", status != null ? status.getStatusCode() : -1);
+                        currentPaymentCallbackContext.error(errorResponse);
+                    } else {
+                        currentPaymentCallbackContext.error("Payment failed with unknown error");
+                    }
+                    break;
+
+                default:
+                    currentPaymentCallbackContext.error("Unknown payment result: " + resultCode);
+                    break;
+            }
+        } catch (JSONException e) {
+            Log.e(TAG, "JSON error in onActivityResult: " + e.getMessage());
+            currentPaymentCallbackContext.error("Error processing payment result: " + e.getMessage());
+        }
+    }
+
+    private void handlePaymentSuccess(PaymentData paymentData) {
+        try {
+            String paymentInfo = paymentData.toJson();
+            if (paymentInfo == null) {
+                currentPaymentCallbackContext.error("No payment information received");
+                return;
+            }
+
+            JSONObject paymentMethodData = new JSONObject(paymentInfo);
+            JSONObject response = new JSONObject();
+            response.put("status", 0);
+            response.put("message", "Payment successful");
+            response.put("paymentData", paymentMethodData);
+            
+            currentPaymentCallbackContext.success(response);
+            
+        } catch (JSONException e) {
+            Log.e(TAG, "JSON error in handlePaymentSuccess: " + e.getMessage());
+            currentPaymentCallbackContext.error("Error processing payment data: " + e.getMessage());
+        }
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        resetPaymentState();
+        Log.d(TAG, "Plugin destroyed, state reset");
+    }
 }
