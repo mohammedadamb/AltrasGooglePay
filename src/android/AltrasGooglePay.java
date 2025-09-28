@@ -189,7 +189,7 @@ public class AltrasGooglePay extends CordovaPlugin {
         //   resolvePaymentForResult.launch(new IntentSenderRequest.Builder(resolution).build());
          AutoResolveHelper.resolveTask(
                     task,
-                    this.cordova.getActivity(), LOAD_PAYMENT_DATA_REQUEST_CODE);
+                    cordova.getActivity(), LOAD_PAYMENT_DATA_REQUEST_CODE);
             // currentPaymentCallbackContext.error(exception.getMessage());
 
         } else if (exception instanceof ApiException) {
