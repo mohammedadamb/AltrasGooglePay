@@ -47,6 +47,7 @@ public class AltrasGooglePay extends CordovaPlugin {
     @Override
     public void initialize(CordovaInterface cordova, CordovaWebView webView) {
         super.initialize(cordova, webView);
+        this.cordovaInterface = cordova;
         this.cordova.setActivityResultCallback(this);
     }
 
