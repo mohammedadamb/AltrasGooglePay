@@ -292,7 +292,7 @@ public class AltrasGooglePay extends CordovaPlugin {
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         JSONObject response = new JSONObject() ;
-                this.mCallbackContext.error("getting response ");
+                this.mCallbackContext.error("getting response " + Integer.toString(requestCode));
         switch (requestCode) {
             // value passed in AutoResolveHelper
             case LOAD_PAYMENT_DATA_REQUEST_CODE:
