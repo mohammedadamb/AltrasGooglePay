@@ -242,7 +242,7 @@ public class AltrasGooglePay extends CordovaPlugin {
         handlePaymentSuccess(completedTask.getResult());
       } else {
         Exception exception = completedTask.getException();
-        this.mCallbackContext.error(exception.getMessage());
+        // this.mCallbackContext.error(exception.getMessage());
 
         if (exception instanceof ResolvableApiException) {
           PendingIntent resolution = ((ResolvableApiException) exception).getResolution();
@@ -250,7 +250,7 @@ public class AltrasGooglePay extends CordovaPlugin {
          AutoResolveHelper.resolveTask(
                     task,
                     this.cordovaInterface.getActivity(), LOAD_PAYMENT_DATA_REQUEST_CODE);
-            this.mCallbackContext.error(exception.getMessage());
+            // this.mCallbackContext.error(exception.getMessage());
 
         } else if (exception instanceof ApiException) {
           ApiException apiException = (ApiException) exception;
